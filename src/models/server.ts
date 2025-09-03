@@ -39,7 +39,7 @@ export class Server {
       },
     );
 
-    this.app.use("/task", taskRouter);
+    this.app.use("/tasks", taskRouter);
   }
 
   listen() {
