@@ -3,7 +3,7 @@ import cors from "cors";
 import type { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 
-import { getTasks } from "../controllers/task.controller.ts";
+import taskRouter from "../routes/task.route.ts";
 
 dotenv.config();
 
@@ -27,7 +27,7 @@ export class Server {
   routes() {
     this.app.get(
       "/",
-      async (req: Request, res: Response, next): Promise<void> => {
+      async (_: Request, res: Response, next): Promise<void> => {
         try {
           res.status(200).json({
             message: `Running on port: ${this.port}!!`,
@@ -39,7 +39,7 @@ export class Server {
       },
     );
 
-    this.app.get("/task", getTasks);
+    this.app.use("/task", taskRouter);
   }
 
   listen() {
