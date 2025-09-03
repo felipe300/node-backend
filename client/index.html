@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link href="./css/style.css" type="text/css" rel="stylesheet" />
+    <title>Socket.IO chat</title>
+    <script type="module">
+      import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
+
+      const socket = io();
+      const form = document.getElementById("form");
+      const input = document.getElementById("input");
+      const messages = document.getElementById("messages");
+
+      socket.on("Chat message", (msg) => {
+        const item = `<li>${msg}</li>`;
+        messages.insertAdjacentHTML("beforeend", item);
+      });
+
+      socket.on("New task", (task) => {
+        const item = `<li><strong>The task '${task.title}' was created</strong></li>`;
+        messages.insertAdjacentHTML("beforeend", item);
+      });
+
+      socket.on("Update task", (task) => {
+        const item = `<li><strong>The task '${task.title}' was updated</strong></li>`;
+        messages.insertAdjacentHTML("beforeend", item);
+      });
+
+      socket.on("Delete task", (task) => {
+        const item = `<li><strong>The task '${task}' was deleted</strong></li>`;
+        messages.insertAdjacentHTML("beforeend", item);
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        if (input.value) {
+          socket.emit("Chat message", input.value);
+          input.value = "";
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" /><button>Send</button>
+    </form>
+  </body>
+</html>
