@@ -6,13 +6,18 @@ import {
   updateTaskById,
   deleteTaskById,
 } from "../controllers/task.controller.ts";
+import type { Server } from "socket.io";
 
-const taskRouter = Router();
+const router = (io: Server) => {
+  const router = Router();
 
-taskRouter.get("/", getAllTask);
-taskRouter.get("/:id", getTaskById);
-taskRouter.post("/", createTask);
-taskRouter.put("/:id", updateTaskById);
-taskRouter.delete("/:id", deleteTaskById);
+  router.get("/", getAllTask);
+  router.get("/:id", getTaskById);
+  router.post("/", (req, res) => createTask(req, res, io));
+  router.put("/:id", (req, res) => updateTaskById(req, res, io));
+  router.delete("/:id", (req, res) => deleteTaskById(req, res, io));
 
-export default taskRouter;
+  return router;
+};
+
+export default router;

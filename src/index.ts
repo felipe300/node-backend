@@ -1,4 +1,4 @@
-import { Server } from "./models/server.ts";
+import { MainServer } from "./models/server.ts";
 
-const server = new Server();
+const server = new MainServer();
 server.listen();

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { db } from "../db/db.ts";
 import { tasksTable } from "../db/schema.ts";
 import { eq } from "drizzle-orm";
+import type { Server, Socket } from "socket.io";
 
 export const getAllTask = async (_: Request, res: Response) => {
   try {
@@ -37,7 +38,7 @@ export const getTaskById = async (req: Request, res: Response) => {
   }
 };
 
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (req: Request, res: Response, io: Server) => {
   try {
     const { title, description, status } = req.body;
     const result = await db
@@ -55,13 +56,21 @@ export const createTask = async (req: Request, res: Response) => {
         status: tasksTable.status,
       });
 
-    res.status(201).json({ message: "Task Created", task: result.at(0) });
+    const newTask = result.at(0);
+
+    io.emit("New task", newTask);
+
+    res.status(201).json({ message: "Task Created", task: newTask });
   } catch (err) {
     res.status(500).json({ message: "Error to create task", error: err });
   }
 };
 
-export const updateTaskById = async (req: Request, res: Response) => {
+export const updateTaskById = async (
+  req: Request,
+  res: Response,
+  io: Server,
+) => {
   const taskId = req.params.id || "";
   const { title, description, status } = req.body;
 
@@ -86,6 +95,8 @@ export const updateTaskById = async (req: Request, res: Response) => {
       })
       .execute();
 
+    io.emit("Update task", newTask);
+
     res
       .status(203)
       .json({ message: `Task with id: '${taskId}' updated`, task: newTask });
@@ -97,7 +108,11 @@ export const updateTaskById = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteTaskById = async (req: Request, res: Response) => {
+export const deleteTaskById = async (
+  req: Request,
+  res: Response,
+  io: Server,
+) => {
   const taskId = req.params.id || "";
 
   if (!taskId) {
@@ -105,8 +120,22 @@ export const deleteTaskById = async (req: Request, res: Response) => {
       .status(400)
       .json({ message: "Task Id is missing from the request parameters." });
   }
+
   try {
+    const taskToDelete = await db
+      .delete(tasksTable)
+      .where(eq(tasksTable.id, taskId))
+      .execute();
+
+    if (taskToDelete.length === 0) {
+      return res
+        .status(404)
+        .json({ message: `Task with id: '${taskId}' not found.` });
+    }
+
     await db.delete(tasksTable).where(eq(tasksTable.id, taskId)).execute();
+
+    io.emit("Delete task", taskId);
 
     res.status(200).json({ message: `Task with id: '${taskId}' deleted` });
   } catch (err) {
