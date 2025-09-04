@@ -31,11 +31,6 @@ export class MainServer {
       });
 
       socket.on("Chat message", async (msg) => {
-        try {
-          console.log("aaa");
-        } catch (error) {
-          console.log(error);
-        }
         this.io.emit("Chat message", msg);
       });
     });

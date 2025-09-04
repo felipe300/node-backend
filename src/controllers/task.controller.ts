@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { db } from "../db/db.ts";
 import { tasksTable } from "../db/schema.ts";
 import { eq } from "drizzle-orm";
-import type { Server, Socket } from "socket.io";
+import type { Server } from "socket.io";
 
 export const getAllTask = async (_: Request, res: Response) => {
   try {
@@ -80,7 +80,7 @@ export const updateTaskById = async (
       .json({ message: "Task Id is missing from the request parameters." });
   }
   try {
-    const newTask = await db
+    const updatedTask = await db
       .update(tasksTable)
       .set({
         title,
@@ -88,18 +88,17 @@ export const updateTaskById = async (
         status,
       })
       .where(eq(tasksTable.id, taskId))
-      .returning({
-        title: tasksTable.title,
-        description: tasksTable.description,
-        status: tasksTable.status,
-      })
+      .returning()
       .execute();
 
-    io.emit("Update task", newTask);
+    if (updatedTask.length > 0) {
+      io.emit("Update task", updatedTask[0]);
+    }
 
-    res
-      .status(203)
-      .json({ message: `Task with id: '${taskId}' updated`, task: newTask });
+    res.status(203).json({
+      message: `Task with id: '${taskId}' updated`,
+      task: updatedTask[0],
+    });
   } catch (err) {
     res.status(500).json({
       message: `Error to update task with id. Id '${taskId}' do not exits!`,
@@ -125,6 +124,7 @@ export const deleteTaskById = async (
     const taskToDelete = await db
       .delete(tasksTable)
       .where(eq(tasksTable.id, taskId))
+      .returning({ id: tasksTable.id })
       .execute();
 
     if (taskToDelete.length === 0) {
@@ -132,8 +132,6 @@ export const deleteTaskById = async (
         .status(404)
         .json({ message: `Task with id: '${taskId}' not found.` });
     }
-
-    await db.delete(tasksTable).where(eq(tasksTable.id, taskId)).execute();
 
     io.emit("Delete task", taskId);
 
