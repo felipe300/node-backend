@@ -80,6 +80,15 @@ npx drizzle generate
 npx drizzle push
 ```
 
+**`.env` file**
+
+For this example project use the env variables shown in the `example.env` files. Change the values accord your project.
+
+```sh
+PORT=3000 # development port
+DB_FILE_NAME=file:local.db # location of the database
+```
+
 The project includes several pre-configured npm scripts to help with development and building.
 
 ```sh
